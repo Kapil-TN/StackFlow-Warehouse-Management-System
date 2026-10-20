@@ -14,6 +14,7 @@ import Inventory from './pages/Inventory';
 import Receiving from './pages/Receiving';
 import Orders from './pages/Orders';
 import ActivityLogs from './pages/ActivityLogs';
+import Users from './pages/Users';
 
 const ThemedToaster = () => {
   const { isDark } = useTheme();
@@ -80,6 +81,14 @@ function App() {
               element={
                 <ProtectedRoute roles={['admin', 'warehouse_manager']}>
                   <ActivityLogs />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="users"
+              element={
+                <ProtectedRoute roles={['admin']}>
+                  <Users />
                 </ProtectedRoute>
               }
             />

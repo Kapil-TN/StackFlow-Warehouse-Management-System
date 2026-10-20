@@ -4,7 +4,7 @@ import { useTheme } from '../context/ThemeContext';
 import {
   LayoutDashboard, Package,
   Inbox, Zap, BarChart2,
-  Sun, Moon, LogOut
+  Sun, Moon, LogOut, Users as UsersIcon
 } from 'lucide-react';
 
 const warehouseItems = [
@@ -18,8 +18,12 @@ const insightItems = [
   { to: '/activity', icon: BarChart2, label: 'Reports' },
 ];
 
+const adminItems = [
+  { to: '/users', icon: UsersIcon, label: 'Users' },
+];
+
 const Sidebar = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
@@ -294,6 +298,7 @@ const Sidebar = () => {
         <nav className="sf-nav">
           <NavSection title="Warehouse" items={warehouseItems} />
           <NavSection title="Insights" items={insightItems} />
+          {isAdmin() && <NavSection title="Administration" items={adminItems} />}
         </nav>
 
         {/* Bottom controls */}
