@@ -48,15 +48,32 @@ app.get("/api/health", (req, res) => {
 app.use(errorHandler);
 
 // ─── Database & Server ────────────────────────────────────────────────────────
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => {
+let isConnected = false;
+
+const connectDB = async () => {
+  if (isConnected) return;
+  try {
+    const db = await mongoose.connect(process.env.MONGO_URI);
+    isConnected = db.connections[0].readyState;
     console.log("✅ MongoDB connected successfully");
+  } catch (error) {
+    console.error("❌ MongoDB connection failed:", error.message);
+  }
+};
+
+// Connect DB middleware for incoming requests
+app.use(async (req, res, next) => {
+  await connectDB();
+  next();
+});
+
+// Start local dev server if running directly
+if (process.env.NODE_ENV !== "production") {
+  connectDB().then(() => {
     app.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
     });
-  })
-  .catch((error) => {
-    console.error("❌ MongoDB connection failed:", error.message);
-    process.exit(1);
   });
+}
+
+module.exports = app;
