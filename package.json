@@ -1,0 +1,7 @@
+{
+  "name": "stackflow-warehouse-management-system",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix client install && npm --prefix client run build && npm --prefix server install"
+  }
+}
