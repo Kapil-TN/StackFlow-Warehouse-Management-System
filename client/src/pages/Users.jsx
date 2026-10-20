@@ -6,7 +6,7 @@ import {
   Input, Select, Spinner, EmptyState
 } from '../components/ui';
 import Modal from '../components/Modal';
-import { Plus, Search, Edit2, Trash2, Shield, User, Users, RefreshCw, Key } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Users, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const EMPTY_FORM = {
@@ -32,7 +32,7 @@ const UsersPage = () => {
     setLoading(true);
     try {
       const res = await authAPI.getUsers();
-      setUsers(res.data || []);
+      setUsers(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to load users');
     } finally {
@@ -120,7 +120,7 @@ const UsersPage = () => {
     }
   };
 
-  const filteredUsers = users.filter((u) => {
+  const filteredUsers = (users || []).filter((u) => {
     const matchesSearch =
       u.name?.toLowerCase().includes(search.toLowerCase()) ||
       u.email?.toLowerCase().includes(search.toLowerCase());
@@ -129,16 +129,16 @@ const UsersPage = () => {
   });
 
   return (
-    <div>
+    <div className="animate-fade-in">
       <PageHeader
         title="User Management"
         subtitle="Create, manage, and assign roles for system operators and managers"
         action={
           <div style={{ display: 'flex', gap: '10px' }}>
-            <Button variant="secondary" onClick={fetchUsers} icon={<RefreshCw size={14} />}>
+            <Button variant="secondary" onClick={fetchUsers} icon={RefreshCw}>
               Refresh
             </Button>
-            <Button variant="primary" onClick={openAdd} icon={<Plus size={15} />}>
+            <Button variant="primary" onClick={openAdd} icon={Plus}>
               Add User
             </Button>
           </div>
@@ -159,24 +159,44 @@ const UsersPage = () => {
                 color: 'var(--text-muted)',
               }}
             />
-            <Input
+            <input
               placeholder="Search by name or email..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              style={{ paddingLeft: '34px', width: '100%' }}
+              style={{
+                width: '100%',
+                background: 'var(--bg-input)',
+                border: '1px solid var(--border)',
+                borderRadius: '7px',
+                padding: '8px 10px 8px 34px',
+                fontSize: '13px',
+                color: 'var(--text-primary)',
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
             />
           </div>
 
-          <Select
+          <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            style={{ width: '180px' }}
+            style={{
+              width: '180px',
+              background: 'var(--bg-input)',
+              border: '1px solid var(--border)',
+              borderRadius: '7px',
+              padding: '8px 10px',
+              fontSize: '13px',
+              color: 'var(--text-primary)',
+              outline: 'none',
+              boxSizing: 'border-box',
+            }}
           >
             <option value="">All Roles</option>
             <option value="admin">Admin</option>
             <option value="warehouse_manager">Warehouse Manager</option>
             <option value="operator">Operator</option>
-          </Select>
+          </select>
         </div>
       </Card>
 
@@ -192,7 +212,7 @@ const UsersPage = () => {
             title="No Users Found"
             description={search || roleFilter ? "Try adjusting your search criteria" : "Click 'Add User' to register your first team member"}
             action={
-              <Button variant="primary" onClick={openAdd} icon={<Plus size={14} />}>
+              <Button variant="primary" onClick={openAdd} icon={Plus}>
                 Add User
               </Button>
             }
@@ -258,24 +278,40 @@ const UsersPage = () => {
                     </Td>
                     <Td style={{ textAlign: 'right' }}>
                       <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
-                        <Button
-                          variant="ghost"
-                          size="sm"
+                        <button
+                          type="button"
                           onClick={() => openEdit(u)}
                           title="Edit User"
+                          style={{
+                            padding: '6px',
+                            color: 'var(--text-muted)',
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                          }}
                         >
-                          <Edit2 size={13} />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
+                          <Edit2 size={14} />
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => setDeleteModal(u)}
                           disabled={isSelf}
                           title={isSelf ? "Cannot delete your own account" : "Delete User"}
-                          style={{ color: isSelf ? 'var(--text-muted)' : 'var(--badge-danger-text)' }}
+                          style={{
+                            padding: '6px',
+                            color: isSelf ? 'var(--text-muted)' : 'var(--badge-danger-text)',
+                            background: 'none',
+                            border: 'none',
+                            cursor: isSelf ? 'not-allowed' : 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            opacity: isSelf ? 0.4 : 1,
+                          }}
                         >
-                          <Trash2 size={13} />
-                        </Button>
+                          <Trash2 size={14} />
+                        </button>
                       </div>
                     </Td>
                   </Tr>
@@ -288,19 +324,9 @@ const UsersPage = () => {
 
       {/* Add / Edit Modal */}
       <Modal
-        open={modalOpen}
+        isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         title={editUser ? 'Edit User' : 'Add New User'}
-        footer={
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-            <Button variant="secondary" onClick={() => setModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="primary" onClick={handleSave} disabled={saving}>
-              {saving ? <Spinner size="sm" /> : editUser ? 'Update User' : 'Create User'}
-            </Button>
-          </div>
-        }
       >
         <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div>
@@ -312,7 +338,6 @@ const UsersPage = () => {
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               required
-              style={{ width: '100%' }}
             />
           </div>
 
@@ -326,7 +351,6 @@ const UsersPage = () => {
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
               required
-              style={{ width: '100%' }}
             />
           </div>
 
@@ -340,7 +364,6 @@ const UsersPage = () => {
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
               required={!editUser}
-              style={{ width: '100%' }}
             />
           </div>
 
@@ -351,23 +374,35 @@ const UsersPage = () => {
             <Select
               value={form.role}
               onChange={(e) => setForm({ ...form, role: e.target.value })}
-              style={{ width: '100%' }}
             >
               <option value="operator">Operator (Receiving, Picking & Orders)</option>
               <option value="warehouse_manager">Warehouse Manager (Stock & Catalog Management)</option>
               <option value="admin">Administrator (Full Access & User Management)</option>
             </Select>
           </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '12px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
+            <Button variant="secondary" onClick={() => setModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" type="submit" loading={saving}>
+              {editUser ? 'Update User' : 'Create User'}
+            </Button>
+          </div>
         </form>
       </Modal>
 
       {/* Delete Confirmation Modal */}
       <Modal
-        open={!!deleteModal}
+        isOpen={!!deleteModal}
         onClose={() => setDeleteModal(null)}
         title="Delete User"
-        footer={
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-secondary)' }}>
+            Are you sure you want to delete user <strong style={{ color: 'var(--text-primary)' }}>{deleteModal?.name}</strong> ({deleteModal?.email})? This action cannot be undone.
+          </p>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
             <Button variant="secondary" onClick={() => setDeleteModal(null)}>
               Cancel
             </Button>
@@ -375,11 +410,7 @@ const UsersPage = () => {
               Delete
             </Button>
           </div>
-        }
-      >
-        <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-secondary)' }}>
-          Are you sure you want to delete user <strong style={{ color: 'var(--text-primary)' }}>{deleteModal?.name}</strong> ({deleteModal?.email})? This action cannot be undone.
-        </p>
+        </div>
       </Modal>
     </div>
   );
