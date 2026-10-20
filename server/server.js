@@ -1,17 +1,62 @@
 const dns = require("dns");
 dns.setServers(["1.1.1.1"]);
+
 const express = require("express");
 const mongoose = require("mongoose");
+const cors = require("cors");
 require("dotenv").config();
+
+const { errorHandler } = require("./middleware/errorHandler");
+
+const authRoutes = require("./routes/authRoutes");
+const productRoutes = require("./routes/productRoutes");
+const warehouseRoutes = require("./routes/warehouseRoutes");
+const binRoutes = require("./routes/binRoutes");
+const inventoryRoutes = require("./routes/inventoryRoutes");
+const receiptRoutes = require("./routes/receiptRoutes");
+const orderRoutes = require("./routes/orderRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
+const activityRoutes = require("./routes/activityRoutes");
+
 const app = express();
-const port = 5000;
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => {
-        console.log("MongoDB connected successfully")
-    })
-    .catch((error) => {
-        console.log("MongoDB connection failed:", error.message);
-    });
-app.listen(port, () =>{
-    console.log(`Server running on port ${port}`);
+const PORT = process.env.PORT || 5000;
+
+app.use(cors({
+  origin: process.env.CLIENT_URL || "http://localhost:5173",
+  credentials: true,
+}));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+// ─── Routes ───────────────────────────────────────────────────────────────────
+app.use("/api/auth", authRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/warehouses", warehouseRoutes);
+app.use("/api/bins", binRoutes);
+app.use("/api/inventory", inventoryRoutes);
+app.use("/api/receipts", receiptRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/activity", activityRoutes);
+
+// Health check
+app.get("/api/health", (req, res) => {
+  res.json({ status: "OK", timestamp: new Date().toISOString() });
 });
+
+// ─── Error Handler ────────────────────────────────────────────────────────────
+app.use(errorHandler);
+
+// ─── Database & Server ────────────────────────────────────────────────────────
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log("✅ MongoDB connected successfully");
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
+    });
+  })
+  .catch((error) => {
+    console.error("❌ MongoDB connection failed:", error.message);
+    process.exit(1);
+  });
